@@ -119,6 +119,7 @@ const vector = (x = 0, y = 0) => ({x, y});
 const point_translate = (p, v) => ({x: p.x + v.x, y: p.y + v.y});
 const vector_rotation = (v, deg) => ({x: (v.x * Math.cos(radian(deg)) - v.y * Math.sin(radian(deg))), y:(v.x * Math.sin(radian(deg)) + v.y * Math.cos(radian(deg)))});
 const vector_dilation = (v, s) => ({x: v.x * s, y: v.y *s});
+const vector_change = (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y});
 
 // create player
 let centre = point(windowWidth / 2, windowHeight / 2);
