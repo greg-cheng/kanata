@@ -114,15 +114,17 @@ ctx.fillStyle = '#000';
 
 // construct point functions 
 const radian = (deg) => (deg * (Math.PI / 180));
-const point = (x = 0, y = 0) => ({x, y});
+const point  = (x = 0, y = 0) => ({x, y});
 const vector = (x = 0, y = 0) => ({x, y});
-const point_translate = (p, v) => ({x: p.x + v.x, y: p.y + v.y});
+const point_translate = (p, v)   => ({x: p.x + v.x, y: p.y + v.y});
 const vector_rotation = (v, deg) => ({x: (v.x * Math.cos(radian(deg)) - v.y * Math.sin(radian(deg))), y:(v.x * Math.sin(radian(deg)) + v.y * Math.cos(radian(deg)))});
 const vector_dilation = (v, s) => ({x: v.x * s, y: v.y *s});
 const vector_change = (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y});
 
 // create player
+// centre point
 let centre = point(windowWidth / 2, windowHeight / 2);
+// create object
 var ship = new Object();
 ship.centre = centre;
 ship.rotation = 0;
