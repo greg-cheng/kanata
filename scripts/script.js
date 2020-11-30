@@ -19,20 +19,29 @@ const rainbow = (i) =>  _rainbow_(i);
 
 // keypress events
 function key_press(event){
-    keyCode = event.which;
+    let keyCode = event.which;
     if (keyCode === 65) {
         ship.rot_vel = 5;
     } 
     else if (keyCode === 68) {
         ship.rot_vel = -5;
     }
-    else if (keyCode === 87) {
+    else if (keyCode === 32 && !fired) {
+        console.log("fire");
+        fired = true;
+        console.log(bullet_container);
+        fire();
     }
 }
 
 // key release
+// reset variables to default
 function key_release(event){
-    ship.rot_vel = 0;
+    let keyCode = event.which;
+    if (keyCode === 65 || keyCode === 68)
+        ship.rot_vel = 0;
+    if (keyCode === 32 && fired)
+        fired = false;
 }
 
 // apply rotation to all vectors in array
@@ -41,6 +50,7 @@ function rotate_vec (v, rotation) {
         // calling vector rotation function
         v[i] = vector_rotation(v[i], rotation);
     }
+    
     return v;
 }
 
@@ -69,9 +79,38 @@ function draw_player (centre, rotation){
 
     // rotate vectors for player sprite
     vec = rotate_vec(vec, rotation);
+    ship.rot_vec = vec[0];
 
     // draw player
     draw_poly(vec, centre);
+}
+
+function draw_bullet (){
+    // begin path
+    ctx.beginPath();
+    for (let i = 0; i < bullet_container.length; i++){
+        // draw bullet
+        console.log("%i, %i",bullet_container[i].centre.x,bullet_container[i].centre.y)
+        ctx.arc(bullet_container[i].centre.x,bullet_container[i].centre.y, 3, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+
+    // // stroke
+    // ctx.stroke();
+}
+
+function fire(){
+    // scale the vector by 0.2 -> original has magnitude of 40 px
+    bullet.vec = vector_scale(ship.rot_vec, 0.2);
+
+    // center the bullet object
+    bullet.centre = point_translate(ship.centre, ship.rot_vec);
+
+    // deepcopy the bullet
+    let copy = JSON.parse(JSON.stringify(bullet));
+
+    // append 
+    bullet_container.push(copy);
 }
 
 // draw function
@@ -86,8 +125,15 @@ function draw (i) {
     // apply rotation 
     ship.rotation += ship.rot_vel;
 
-    // apply ship movement vector
+    // apply ship movement vector 
     ship.centre = point_translate(ship.centre, ship.vec);
+
+    for (let i = 0; i < bullet_container.length; i++){
+        // apply bullet vector
+        bullet_container[i].centre = point_translate(bullet_container[i].centre, bullet_container[i].vec);
+    }
+    // draw bullet  
+    draw_bullet();
 
     // draw player
     draw_player(ship.centre, ship.rotation);
@@ -111,14 +157,14 @@ canvas.style.border = '1px solid black';
 const ctx = canvas.getContext('2d');
 ctx.lineWidth = 3;
 ctx.fillStyle = '#000';
-
-// construct point functions 
+ 
+// point modificatoin functions 
 const radian = (deg) => (deg * (Math.PI / 180));
 const point  = (x = 0, y = 0) => ({x, y});
 const vector = (x = 0, y = 0) => ({x, y});
 const point_translate = (p, v)   => ({x: p.x + v.x, y: p.y + v.y});
 const vector_rotation = (v, deg) => ({x: (v.x * Math.cos(radian(deg)) - v.y * Math.sin(radian(deg))), y:(v.x * Math.sin(radian(deg)) + v.y * Math.cos(radian(deg)))});
-const vector_dilation = (v, s) => ({x: v.x * s, y: v.y *s});
+const vector_scale = (v, s) => ({x: v.x * s, y: v.y *s});
 const vector_change = (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y});
 
 // create player
@@ -131,8 +177,17 @@ ship.rotation = 0;
 ship.velocity = 1;
 ship.rot_vel = 0;
 ship.vec = vector(0, 0);
+ship.rot_vec = vector(0,-40);
+
+// create bullet
+var bullet = new Object();
+bullet.centre = point_translate(centre, ship.rot_vec);
+bullet.vec = vector(0,0);
+
+var bullet_container = [];
 
 // event listeners 
+var fired = false;
 document.addEventListener("keydown", key_press);
 document.addEventListener("keyup", key_release);
 
