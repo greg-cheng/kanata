@@ -14,26 +14,26 @@ function _rainbow_(i){
     return "#"+ red + green + blue;
 }
 
-// create color code string
-const rainbow = (i) =>  _rainbow_(i);
-
 // keypress events
 function key_press(event){
     let keyCode = event.which;
     if (keyCode === 65) {
-        ship.rot_vel = 5;
+        ship.rot_vel = 3;
     } 
-    else if (keyCode === 68) {
-        ship.rot_vel = -5;
+    if (keyCode === 68) {
+        ship.rot_vel = -3;
     }
-    else if (keyCode === 32 && !fired && !cool_down) {
-        console.log("fire");
+    if (keyCode === 32 && !fired && !cool_down) {
+        console.log("trigger");
         fire();
         fire_timer = 0;
         fired = true;
         // console.log(bullet_container);
     }
 }
+
+// create color code string
+const rainbow = (i) =>  _rainbow_(i);
 
 // key release
 // reset variables to default
@@ -79,11 +79,11 @@ function draw_poly (vec, centre) {
 // draw player
 function draw_player (centre, rotation){
     // vector from centre of ship
-    let vec = [vector(0, -30), vector(15, 15), vector(-15, 15)];
+    let vec = [vector(0, -30), vector(15, 15), vector(6,12), vector(-6,12), vector(-15, 15)];
 
     // rotate vectors for player sprite
     vec = rotate_vec(vec, rotation);
-    ship.rot_vec = vec[0];
+    ship.fire_vec = vec[0];
 
     // draw player
     draw_poly(vec, centre);
@@ -104,10 +104,28 @@ function draw_bullet (){
 }
 
 function fire(){
-    let _bullet_ = bullet(point_translate(ship.centre, ship.rot_vec), vector_scale(ship.rot_vec, 0.3), 0);
-    console.log(_bullet_);
+    let _bullet_ = bullet(point_translate(ship.centre, ship.fire_vec), vector_scale(ship.fire_vec, bullet_speed), 0);
+    console.log("fire");
     // append 
     bullet_container.push(_bullet_);
+}
+
+function check_boundary(obj){
+    if (obj.centre.x > canvas.width){
+        return point_flip_right(obj.centre);
+    } 
+    else if (obj.centre.x < 0){
+        return point_flip_left(obj.centre);
+    } 
+    else if (obj.centre.y > canvas.height){
+        return point_flip_bot(obj.centre);
+    } 
+    else if (obj.centre.y < 0){
+        return point_flip_top(obj.centre);
+    }
+    else {
+        return obj.centre;
+    }
 }
 
 // draw function
@@ -130,23 +148,27 @@ function draw (i) {
         bullet_container[i].centre = point_translate(bullet_container[i].centre, bullet_container[i].vec);
         bullet_container[i].timer ++;
 
-        // check out of bound
-        if (bullet_container[i].centre.x > canvas.width){
-            bullet_container[i].centre = point_flip_right(bullet_container[i].centre);
-        } 
-        else if (bullet_container[i].centre.x < 0){
-            bullet_container[i].centre = point_flip_left(bullet_container[i].centre);
-        } 
-        else if (bullet_container[i].centre.y > canvas.height){
-            bullet_container[i].centre = point_flip_bot(bullet_container[i].centre);
-        } 
-        else if (bullet_container[i].centre.y < 0){
-            bullet_container[i].centre = point_flip_top(bullet_container[i].centre);
-        }
+        
+        bullet_container[i].centre = check_boundary(bullet_container[i]);
+        
+
+        // // check out of bound
+        // if (bullet_container[i].centre.x > canvas.width){
+        //     bullet_container[i].centre = point_flip_right(bullet_container[i].centre);
+        // } 
+        // else if (bullet_container[i].centre.x < 0){
+        //     bullet_container[i].centre = point_flip_left(bullet_container[i].centre);
+        // } 
+        // else if (bullet_container[i].centre.y > canvas.height){
+        //     bullet_container[i].centre = point_flip_bot(bullet_container[i].centre);
+        // } 
+        // else if (bullet_container[i].centre.y < 0){
+        //     bullet_container[i].centre = point_flip_top(bullet_container[i].centre);
+        // }
     }
 
     // shift the first element when it stays alive for over 120 frames
-    if (bullet_container.length && bullet_container[0].timer >= 320) {
+    if (bullet_container.length && bullet_container[0].timer >= bullet_lifetime) {
         bullet_container.shift();
     }
 
@@ -170,6 +192,12 @@ function draw (i) {
         }
     }
 
+    // test
+    test_ast.centre = point_translate(test_ast.centre, vector(-1,-1));
+    test_ast.centre = check_boundary(test_ast);
+    draw_poly(test_ast.vec, test_ast.centre);
+    
+
     // draw bullet  
     draw_bullet();
 
@@ -187,14 +215,14 @@ console.log("Window is %d by %d", windowWidth, windowHeight);
 const canvas = document.getElementById('mainCanvas');
 
 // set canvas size
-canvas.width = windowWidth - 20;
-canvas.height = windowHeight - 20;
+canvas.width = windowWidth - 30;
+canvas.height = windowHeight - 30;
 canvas.style.border = '1px solid black';
 
 // set up context for the canvas
 const ctx = canvas.getContext('2d');
-ctx.lineWidth = 3;
-ctx.fillStyle = '#000';
+ctx.lineWidth = 2;
+ctx.fillStyle = '#000009';
  
 // point modificatoin functions 
 const radian = (deg) => (deg * (Math.PI / 180));
@@ -211,40 +239,52 @@ const point_flip_bot = (p) => ({x: windowWidth - p.x, y: 0});
 const point_flip_left = (p) => ({x: canvas.width, y: windowHeight - p.y});
 const point_flip_right = (p) => ({x: 0, y: windowHeight - p.y});
 
-// centre point
-let centre = point(windowWidth / 2, windowHeight / 2);
+// game object functions: bullet, asteroid
+const bullet = (centre, vec, timer) => ({centre, vec, timer});
+const asteroid = (centre, vec, alive) => ({centre, vec, alive});
 
-// create object
-var ship = new Object();
+// centre point
+const centre = point(windowWidth / 2, windowHeight / 2);
+
+// bounding box is 60px x 60px
+const asteroid_vec = [vector(26, -27), vector(13, -30), vector(0, -27), vector(-12, -30), vector(-20, -27), vector(-27, -23), vector(-30, -10), vector(-24, -2), vector(-30, 8), vector(-20,30), vector(0,26), vector(17, 30), vector(21, 19), vector(28,18), vector(25, 3), vector(30, -10)];
+
+var test_ast = asteroid(point(windowWidth / 2 -50, windowHeight / 2 -50), rotate_vec(asteroid_vec, Math.floor((Math.random() * 360) + 1)), true);
+
+// create ship(player) object
+const ship = new Object();
 ship.centre = centre;
 ship.rotation = 0;
-ship.velocity = 1;
 ship.rot_vel = 0;
+ship.fire_vec = vector(0, -30);
+ship.thrust = 0;
 ship.vec = vector(0, 0);
-ship.rot_vec = vector(0, -30);
 
 // // create bullet
 // const bullet = new Object();
-// bullet.centre = point_translate(centre, ship.rot_vec);
+// bullet.centre = point_translate(centre, ship.fire_vec);
 // bullet.vec = vector(0,0);
 
-// // bullet function
-const bullet = (centre, vec, timer) => ({centre, vec, timer});
-
-// contains list of bullets
+// contains all of the bullets on screen
 var bullet_container = [];
 
-// event listeners
-// firing boolean 
-var fired = false;
-// firing rate timer
-var fire_timer = 0;
+// contains all of the asteriods
+var asteroid_container = [];
 
+// firing boolean, and firing timer -> controlled by the firing rate
+var fired = false;
+var fire_timer = 0;
+const fire_rate = 10;
+
+// cool down timer to track instead of fire timer after fire key release
 var cool_down = false;
 var cool_down_timer = 0;
 
-var fire_rate = 5;
+// bullet constants
+const bullet_lifetime = 120;
+const bullet_speed = 0.2;
 
+// event listeners
 document.addEventListener("keydown", key_press);
 document.addEventListener("keyup", key_release);
 
