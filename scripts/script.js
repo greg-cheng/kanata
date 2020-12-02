@@ -433,7 +433,7 @@ var cool_down = false;
 var cool_down_timer = 0;
 
 // bullet constants
-const bullet_lifetime = 100;
+const bullet_lifetime = 150;
 const bullet_speed = 0.2;
 
 // event listeners
