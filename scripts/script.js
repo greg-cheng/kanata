@@ -27,10 +27,10 @@ function key_press(event){
 
     // apply rotation velocity
     if (keyCode === 65) {
-        ship.rot_vel = 10;
+        ship.rot_vel = 2;
     } 
     if (keyCode === 68) {
-        ship.rot_vel = -10;
+        ship.rot_vel = -2;
     }
 
     // fire bullet
@@ -381,7 +381,7 @@ const bullet = (centre, vec, timer) => ({centre, vec, timer});
 const asteroid = (centre, vec, alive, box, delta, level) => ({centre, vec, alive, box, delta, level});
 
 // centre point
-const centre = point(windowWidth / 2, windowHeight / 2);
+const centre = point(canvas.width / 2, canvas.height / 2);
 
 // bounding box is 60px x 60px
 const asteroid_vec = [vector(26, -27), vector(13, -30), vector(0, -27), vector(-12, -30), vector(-20, -27), vector(-27, -23), vector(-30, -10), vector(-24, -2), vector(-30, 8), vector(-20,30), vector(0,26), vector(17, 30), vector(21, 19), vector(28,18), vector(25, 3), vector(30, -10)];
@@ -420,21 +420,21 @@ var bullet_container = [];
 var asteroid_container = [];
 
 var num_of_ast = 20;
-var ast_spd = 0.5;
+var ast_spd = 1;
 spawn_asteroid(num_of_ast, ast_spd);
 
 // firing boolean, and firing timer -> controlled by the firing rate
 var fired = false;
 var fire_timer = 0;
-const fire_rate = 3;
+const fire_rate = 2;
 
 // cool down timer to track instead of fire timer after fire key release
 var cool_down = false;
 var cool_down_timer = 0;
 
 // bullet constants
-const bullet_lifetime = 500;
-const bullet_speed = 3;
+const bullet_lifetime = 100;
+const bullet_speed = 0.2;
 
 // event listeners
 document.addEventListener("keydown", key_press);
