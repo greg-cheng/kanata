@@ -1,8 +1,9 @@
 //***************************************//
-//
-//          
-//
+//                                       //
+//            ASTEROID REBOOT            //
+//                                       //
 //***************************************//
+
 // changing sine to hex for rainbow cycle
 function sin_to_hex(i, phase) {
     var sin = Math.sin(Math.PI / 720 * 2 * i + phase);
@@ -21,13 +22,18 @@ function _rainbow_(i){
 
 // keypress events
 function key_press(event){
+    // get ascii
     let keyCode = event.which;
+
+    // apply rotation velocity
     if (keyCode === 65) {
         ship.rot_vel = 2;
     } 
     if (keyCode === 68) {
         ship.rot_vel = -2;
     }
+
+    // fire bullet
     if (keyCode === 32 && !fired && !cool_down) {
         fire();
         fire();
@@ -43,9 +49,14 @@ const rainbow = (i) =>  _rainbow_(i);
 // key release
 // reset variables to default
 function key_release(event){
+    // get ascii 
     let keyCode = event.which;
+
+    // when releasing rotation key
     if (keyCode === 65 || keyCode === 68)
         ship.rot_vel = 0;
+
+    // when releasing space key, start cool down timer
     if (keyCode === 32)
         fired = false;
         cool_down = true;
@@ -55,7 +66,7 @@ function key_release(event){
 
 // collision check (line segment intersection checking) 
 
-// max helper function
+// max/min helper function
 const max = (a, b) => (a > b ? a:b);
 const min = (a, b) => (a < b ? a:b);
 
@@ -110,18 +121,27 @@ function check_intersect(p1, q1, p2, q2) {
     return false;
 } 
 
+// check intersection for each box
 function check_box (p1, q1, v, ast){
     // only need to check three because at least two sides has to be intersected if it is intersecting
-    for (let i = 0; i < v.length - 1; i++) {
-        let p2 = point_translate(ast.centre, v[i]);
-        let q2 = point_translate(ast.centre, v[i + 1]);
-        if (check_intersect(p1, q1, p2, q2)) {
-            return true;
-        }
+    
+    let p2 = point_translate(ast.centre, v[0]);
+    let q2 = point_translate(ast.centre, v[1]);
+    if (check_intersect(p1, q1, p2, q2)) {
+        return true;
     }
-
-    let p2 = point_translate(ast.centre, v[3]);
-    let q2 = point_translate(ast.centre, v[0]);
+    p2 = point_translate(ast.centre, v[1]);
+    q2 = point_translate(ast.centre, v[2]);
+    if (check_intersect(p1, q1, p2, q2)) {
+        return true;
+    }
+    p2 = point_translate(ast.centre, v[2]);
+    q2 = point_translate(ast.centre, v[3]);
+    if (check_intersect(p1, q1, p2, q2)) {
+        return true;
+    }
+    p2 = point_translate(ast.centre, v[3]);
+    q2 = point_translate(ast.centre, v[0]);
     if (check_intersect(p1, q1, p2, q2)) {
         return true;
     }
@@ -182,12 +202,12 @@ function draw_bullet (){
         // draw bullet
         let cur = bullet_container[i].centre;
         for (let i = 0; i < asteroid_container.length; i++) {
-            const element = asteroid_container[i];
-            if(check_box(prev, cur, element.box, element)){
+            if(check_box(prev, cur, asteroid_container[i].box, asteroid_container[i])){
                 asteroid_container[i].alive = false;
             }
         }
         ctx.arc(bullet_container[i].centre.x,bullet_container[i].centre.y, 1, 0, 2 * 3);
+        prev = cur;
     }
     ctx.stroke();
 
@@ -200,8 +220,9 @@ function draw_astroid(){
         if (!asteroid_container[i].alive){
             asteroid_container.splice(i, 1);
             console.log("destroyed");
-            continue;
         }
+    }
+    for (let i = 0; i < asteroid_container.length; i++){
         draw_poly(asteroid_container[i].vec, asteroid_container[i].centre);
         draw_poly(asteroid_container[i].box, asteroid_container[i].centre);
     }
@@ -405,7 +426,7 @@ spawn_asteroid(num_of_ast, ast_spd);
 // firing boolean, and firing timer -> controlled by the firing rate
 var fired = false;
 var fire_timer = 0;
-const fire_rate = 10;
+const fire_rate = 3;
 
 // cool down timer to track instead of fire timer after fire key release
 var cool_down = false;
@@ -413,7 +434,7 @@ var cool_down_timer = 0;
 
 // bullet constants
 const bullet_lifetime = 250;
-const bullet_speed = 0.2;
+const bullet_speed = 1;
 
 // event listeners
 document.addEventListener("keydown", key_press);
