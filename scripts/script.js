@@ -1,3 +1,4 @@
+/***************************************/
 // changing sine to hex for rainbow cycle
 function sin_to_hex(i, phase) {
     var sin = Math.sin(Math.PI / 720 * 2 * i + phase);
@@ -18,13 +19,13 @@ function _rainbow_(i){
 function key_press(event){
     let keyCode = event.which;
     if (keyCode === 65) {
-        ship.rot_vel = 3;
+        ship.rot_vel = 2;
     } 
     if (keyCode === 68) {
-        ship.rot_vel = -3;
+        ship.rot_vel = -2;
     }
     if (keyCode === 32 && !fired && !cool_down) {
-        console.log("trigger");
+        fire();
         fire();
         fire_timer = 0;
         fired = true;
@@ -48,14 +49,93 @@ function key_release(event){
         fire_timer = 0;
 }
 
+// collision check (line segment intersection checking) 
+
+// max helper function
+const max = (a, b) => (a > b ? a:b);
+const min = (a, b) => (a < b ? a:b);
+
+// check if q lies on the line pq
+function on_segment (p, q, r) {
+    if (q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) && q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y)) 
+       return true; 
+    return false; 
+}
+
+function point_orientation(p, q, r) {
+    // formula for calculating point orientation of three points
+    let val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+
+    // 0 means the points are collinear
+    if (val == 0) {
+        return 0
+    }
+
+    // 1 -> clockwise, 2 -> counter clockwise
+    return val > 0 ? 1:2 
+}
+
+function check_intersect(p1, q1, p2, q2) { 
+    // check all points
+    let o1 = point_orientation(p1, q1, p2); 
+    let o2 = point_orientation(p1, q1, q2); 
+    let o3 = point_orientation(p2, q2, p1); 
+    let o4 = point_orientation(p2, q2, q1); 
+  
+    // normal intersection
+    if (o1 != o2 && o3 != o4) 
+        return true; 
+  
+    // p1, q1 and p2 are colinear and p2 lies on segment p1q1 
+    if (o1 == 0 && on_segment(p1, p2, q1)) 
+        return true; 
+  
+    // p1, q1 and q2 are colinear and q2 lies on segment p1q1 
+    if (o2 == 0 && on_segment(p1, q2, q1)) 
+        return true; 
+  
+    // p2, q2 and p1 are colinear and p1 lies on segment p2q2 
+    if (o3 == 0 && on_segment(p2, p1, q2)) 
+        return true; 
+  
+     // p2, q2 and q1 are colinear and q1 lies on segment p2q2 
+    if (o4 == 0 && on_segment(p2, q1, q2)) 
+        return true; 
+  
+    // no intersection
+    return false;
+} 
+
+function check_box (p1, q1, v, ast){
+    // only need to check three because at least two sides has to be intersected if it is intersecting
+    for (let i = 0; i < v.length - 1; i++) {
+        let p2 = point_translate(ast.centre, v[i]);
+        let q2 = point_translate(ast.centre, v[i + 1]);
+        if (check_intersect(p1, q1, p2, q2)) {
+            return true;
+        }
+    }
+
+    let p2 = point_translate(ast.centre, v[3]);
+    let q2 = point_translate(ast.centre, v[0]);
+    if (check_intersect(p1, q1, p2, q2)) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
 // apply rotation to all vectors in array
 function rotate_vec (v, rotation) {
-    for (let i = 0; i < v.length; i++) {
+    let vec_list = v;
+    for (let i = 0; i < vec_list.length; i++) {
         // calling vector rotation function
-        v[i] = vector_rotation(v[i], rotation);
+        vec_list[i] = vector_rotation(vec_list[i], rotation);
     }
     
-    return v;
+    return vec_list;
 }
 
 // draw polygon
@@ -92,20 +172,54 @@ function draw_player (centre, rotation){
 function draw_bullet (){
     // begin path
     ctx.beginPath();
-    for (let i = 0; i < bullet_container.length; i++){
+    let prev = bullet_container[0].centre;
+    ctx.arc(bullet_container[0].centre.x,bullet_container[0].centre.y, 2, 0, 2 * 3);
+    for (let i = 1; i < bullet_container.length; i++){
         // draw bullet
-        // console.log("%i, %i",bullet_container[i].centre.x,bullet_container[i].centre.y)
+        let cur = bullet_container[i].centre;
+        for (let i = 0; i < asteroid_container.length; i++) {
+            const element = asteroid_container[i];
+            if(check_box(prev, cur, element.box, element)){
+                asteroid_container[i].alive = false;
+            }
+        }
         ctx.arc(bullet_container[i].centre.x,bullet_container[i].centre.y, 1, 0, 2 * 3);
-        ctx.stroke();
     }
+    ctx.stroke();
 
     // // stroke
     // ctx.stroke();
 }
 
+function draw_astroid(){
+    for (let i = 0; i < asteroid_container.length; i++){
+        if (!asteroid_container[i].alive){
+            asteroid_container.splice(i, 1);
+            console.log("destroyed");
+            continue;
+        }
+        draw_poly(asteroid_container[i].vec, asteroid_container[i].centre);
+        draw_poly(asteroid_container[i].box, asteroid_container[i].centre);
+    }
+}
+
+function spawn_asteroid(num, speed){
+    let dir, x, y, random_speed, delta;
+    for (let i = 0; i < num; i++) {
+        dir = Math.random() * 360;
+        console.log(dir);
+        x = Math.random() * (windowWidth - 60);
+        y = Math.random() * (windowHeight - 60);
+        random_speed = Math.random() * 0.1;
+        delta = vector_scale(vector_rotation(vector(-1,-1), dir), speed + random_speed);
+        let ast = asteroid(point(x, y), rotate_vec(asteroid_vec, dir), true, rotate_vec(asteroid_box, dir), delta, 3);
+        asteroid_container.push(ast);
+        console.log(ast);
+    }
+}
+
 function fire(){
     let _bullet_ = bullet(point_translate(ship.centre, ship.fire_vec), vector_scale(ship.fire_vec, bullet_speed), 0);
-    console.log("fire");
     // append 
     bullet_container.push(_bullet_);
 }
@@ -129,9 +243,9 @@ function check_boundary(obj){
 }
 
 // draw function
-function draw (i) {
+function draw (cnt) {
     // set color
-    let color = rainbow(i);
+    let color = rainbow(cnt);
     ctx.strokeStyle = color;
 
     // clear screen
@@ -147,24 +261,12 @@ function draw (i) {
         // apply bullet vector
         bullet_container[i].centre = point_translate(bullet_container[i].centre, bullet_container[i].vec);
         bullet_container[i].timer ++;
-
-        
         bullet_container[i].centre = check_boundary(bullet_container[i]);
-        
+    }
 
-        // // check out of bound
-        // if (bullet_container[i].centre.x > canvas.width){
-        //     bullet_container[i].centre = point_flip_right(bullet_container[i].centre);
-        // } 
-        // else if (bullet_container[i].centre.x < 0){
-        //     bullet_container[i].centre = point_flip_left(bullet_container[i].centre);
-        // } 
-        // else if (bullet_container[i].centre.y > canvas.height){
-        //     bullet_container[i].centre = point_flip_bot(bullet_container[i].centre);
-        // } 
-        // else if (bullet_container[i].centre.y < 0){
-        //     bullet_container[i].centre = point_flip_top(bullet_container[i].centre);
-        // }
+    for (let i = 0; i < asteroid_container.length; i++) {
+        asteroid_container[i].centre = point_translate(asteroid_container[i].centre, asteroid_container[i].delta);
+        asteroid_container[i].centre = check_boundary(asteroid_container[i]);
     }
 
     // shift the first element when it stays alive for over 120 frames
@@ -192,18 +294,28 @@ function draw (i) {
         }
     }
 
-    // test
-    test_ast.centre = point_translate(test_ast.centre, vector(-1,-1));
-    test_ast.centre = check_boundary(test_ast);
-    draw_poly(test_ast.vec, test_ast.centre);
+    // // test
+    // test_ast.centre = point_translate(test_ast.centre, test_vec); 
+    // test_ast.centre = check_boundary(test_ast);
     
 
     // draw bullet  
-    draw_bullet();
+    if (bullet_container.length){
+        draw_bullet();
+    }
+
+    // draw asteroid  
+    if (asteroid_container.length){
+        draw_astroid();
+    } else{
+        num_of_ast += 3;
+        ast_spd += 0.5;
+        spawn_asteroid(num_of_ast, ast_spd);
+    }
 
     // draw player
     draw_player(ship.centre, ship.rotation);
-    window.requestAnimationFrame((i) => draw(i++));
+    window.requestAnimationFrame((cnt) => draw(cnt++));
 }
 
 // get window width/height
@@ -241,15 +353,26 @@ const point_flip_right = (p) => ({x: 0, y: windowHeight - p.y});
 
 // game object functions: bullet, asteroid
 const bullet = (centre, vec, timer) => ({centre, vec, timer});
-const asteroid = (centre, vec, alive) => ({centre, vec, alive});
+const asteroid = (centre, vec, alive, box, delta, level) => ({centre, vec, alive, box, delta, level});
 
 // centre point
 const centre = point(windowWidth / 2, windowHeight / 2);
 
 // bounding box is 60px x 60px
 const asteroid_vec = [vector(26, -27), vector(13, -30), vector(0, -27), vector(-12, -30), vector(-20, -27), vector(-27, -23), vector(-30, -10), vector(-24, -2), vector(-30, 8), vector(-20,30), vector(0,26), vector(17, 30), vector(21, 19), vector(28,18), vector(25, 3), vector(30, -10)];
+const asteroid_box = [vector(30, 30), vector(-30, 30), vector(-30, -30), vector(30, -30)];
+const bound_box_mod = (box, s, r) => {
+    box.forEach((vec, index) => {
+        box[index] = vector_scale(vec, s);
+        box[index] = vector_rotation(vec, r);
+    });
+    return box;
+};
 
-var test_ast = asteroid(point(windowWidth / 2 -50, windowHeight / 2 -50), rotate_vec(asteroid_vec, Math.floor((Math.random() * 360) + 1)), true);
+// // test asteroid
+// var rot = Math.floor((Math.random() * 360) + 1)
+// const test_ast = asteroid(point(windowWidth / 2 - 50, windowHeight / 2 - 50), rotate_vec(asteroid_vec, rot), true);
+// const test_vec = vector_rotation(vector(-1,-1), rot);
 
 // create ship(player) object
 const ship = new Object();
@@ -271,6 +394,10 @@ var bullet_container = [];
 // contains all of the asteriods
 var asteroid_container = [];
 
+var num_of_ast = 20;
+var ast_spd = 0.5;
+spawn_asteroid(num_of_ast, ast_spd);
+
 // firing boolean, and firing timer -> controlled by the firing rate
 var fired = false;
 var fire_timer = 0;
@@ -281,7 +408,7 @@ var cool_down = false;
 var cool_down_timer = 0;
 
 // bullet constants
-const bullet_lifetime = 120;
+const bullet_lifetime = 250;
 const bullet_speed = 0.2;
 
 // event listeners
