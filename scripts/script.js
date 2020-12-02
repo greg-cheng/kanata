@@ -27,10 +27,10 @@ function key_press(event){
 
     // apply rotation velocity
     if (keyCode === 65) {
-        ship.rot_vel = 2;
+        ship.rot_vel = 10;
     } 
     if (keyCode === 68) {
-        ship.rot_vel = -2;
+        ship.rot_vel = -10;
     }
 
     // fire bullet
@@ -433,8 +433,8 @@ var cool_down = false;
 var cool_down_timer = 0;
 
 // bullet constants
-const bullet_lifetime = 250;
-const bullet_speed = 1;
+const bullet_lifetime = 500;
+const bullet_speed = 3;
 
 // event listeners
 document.addEventListener("keydown", key_press);
