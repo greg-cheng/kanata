@@ -1,4 +1,8 @@
-/***************************************/
+//***************************************//
+//
+//          
+//
+//***************************************//
 // changing sine to hex for rainbow cycle
 function sin_to_hex(i, phase) {
     var sin = Math.sin(Math.PI / 720 * 2 * i + phase);
