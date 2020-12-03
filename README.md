@@ -1,7 +1,5 @@
 # Kanata
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-![Commit](https://img.shields.io/github/last-commit/hausen-wu-23/kanata)
-![Test](https://img.shields.io/badge/tests-24%20passed%2C%2031%20failed-critical)
 ![Issues](https://img.shields.io/github/issues/hausen-wu-23/kanata)
 ![Warning](https://img.shields.io/badge/photosensitive-epilepsy%20warning-important)
 
