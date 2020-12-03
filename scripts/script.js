@@ -434,7 +434,7 @@ var cool_down_timer = 0;
 
 // bullet constants
 const bullet_lifetime = 150;
-const bullet_speed = 0.2;
+const bullet_speed = 0.7;
 
 // event listeners
 document.addEventListener("keydown", key_press);
