@@ -4,6 +4,93 @@
 //                                       //
 //***************************************//
 
+// get window width/height
+let windowWidth = window.innerWidth;
+let windowHeight = window.innerHeight;
+console.log("Window is %d by %d", windowWidth, windowHeight);
+
+// get canvas object
+const canvas = document.getElementById('mainCanvas');
+
+// set canvas size
+canvas.width = windowWidth - 30;
+canvas.height = windowHeight - 30;
+canvas.style.border = '1px solid black';
+
+// set up context for the canvas
+const ctx = canvas.getContext('2d');
+ctx.lineWidth = 2;
+ctx.fillStyle = '#000009';
+ctx.font = "20px Courier";
+ 
+// point modificatoin functions 
+const radian = (deg) => (deg * (Math.PI / 180));
+const point  = (x = 0, y = 0) => ({x, y});
+const vector = (x = 0, y = 0) => ({x, y});
+const point_translate = (p, v)   => ({x: p.x + v.x, y: p.y + v.y});
+const vector_rotation = (v, deg) => ({x: (v.x * Math.cos(radian(deg)) - v.y * Math.sin(radian(deg))), y:(v.x * Math.sin(radian(deg)) + v.y * Math.cos(radian(deg)))});
+const vector_scale = (v, s) => ({x: v.x * s, y: v.y *s});
+const vector_change = (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y});
+
+// teleport on edge
+const point_flip_top = (p) => ({x: windowWidth - p.x, y: canvas.height});
+const point_flip_bot = (p) => ({x: windowWidth - p.x, y: 0});
+const point_flip_left = (p) => ({x: canvas.width, y: windowHeight - p.y});
+const point_flip_right = (p) => ({x: 0, y: windowHeight - p.y});
+
+// centre point
+const centre = point(canvas.width / 2, canvas.height / 2);
+
+// game object functions: bullet, asteroid
+const bullet = (centre, vec, timer) => ({centre, vec, timer});
+const asteroid = (centre, vec, alive, box, delta, level) => ({centre, vec, alive, box, delta, level});
+
+// bounding box is 60px x 60px
+const asteroid_vec = [vector(26, -27), vector(13, -30), vector(0, -27), vector(-12, -30), vector(-20, -27), vector(-27, -23), vector(-30, -10), vector(-24, -2), vector(-30, 8), vector(-20,30), vector(0,26), vector(17, 30), vector(21, 19), vector(28,18), vector(25, 3), vector(30, -10)];
+const asteroid_box = [vector(30, 30), vector(-30, 30), vector(-30, -30), vector(30, -30)];
+
+// // test asteroid
+// var rot = Math.floor((Math.random() * 360) + 1)
+// const test_ast = asteroid(point(windowWidth / 2 - 50, windowHeight / 2 - 50), rotate_vec(asteroid_vec, rot), true);
+// const test_vec = vector_rotation(vector(-1,-1), rot);
+
+// create ship(player) object
+const ship = new Object();
+ship.centre = centre;
+ship.rotation = 0;
+ship.rot_vel = 0;
+ship.fire_vec = vector(0, -30);
+ship.thrust = 0;
+ship.vec = vector(0, 0);
+
+// // create bullet
+// const bullet = new Object();
+// bullet.centre = point_translate(centre, ship.fire_vec);
+// bullet.vec = vector(0,0);
+
+// contains all of the bullets on screen
+var bullet_container = [];
+
+// contains all of the asteriods
+var asteroid_container = [];
+
+var num_of_ast = 20;
+var ast_spd = 1.5;
+var bullet_cnt = 30;
+
+// firing boolean, and firing timer -> controlled by the firing rate
+var fired = false;
+var fire_timer = 0;
+const fire_rate = 2;
+
+// cool down timer to track instead of fire timer after fire key release
+var cool_down = false;
+var cool_down_timer = 0;
+
+// bullet constants
+const bullet_lifetime = 150;
+const bullet_speed = 0.7;
+
 // changing sine to hex for rainbow cycle
 function sin_to_hex(i, phase) {
     var sin = Math.sin(Math.PI / 720 * 2 * i + phase);
@@ -35,10 +122,9 @@ function key_press(event){
 
     // fire bullet
     if (keyCode === 32 && !fired && !cool_down) {
-        fire();
-        fire();
-        fire_timer = 0;
-        fired = true;
+            fire();
+            fire_timer = 0;
+            fired = true;
         // console.log(bullet_container);
     }
 }
@@ -57,11 +143,12 @@ function key_release(event){
         ship.rot_vel = 0;
 
     // when releasing space key, start cool down timer
-    if (keyCode === 32)
+    if (keyCode === 32){
         fired = false;
         cool_down = true;
         cool_down_timer = fire_rate - fire_timer;
         fire_timer = 0;
+    }
 }
 
 // collision check (line segment intersection checking) 
@@ -163,25 +250,25 @@ function rotate_vec (v, rotation) {
 }
 
 // draw polygon
-function draw_poly (vec, centre) {
+function draw_poly (vec, c) {
     // begin path
     ctx.beginPath();
 
     // move to first point
-    ctx.moveTo(centre.x + vec[0].x, centre.y + vec[0].y);
+    ctx.moveTo(c.x + vec[0].x, c.y + vec[0].y);
 
     // iterate through each point of the polygon
     for (let i = 1; i < vec.length; i++){
-        ctx.lineTo(centre.x + vec[i].x, centre.y + vec[i].y);
+        ctx.lineTo(c.x + vec[i].x, c.y + vec[i].y);
     }
     
     // close the shape
-    ctx.lineTo(centre.x + vec[0].x, centre.y + vec[0].y);
+    ctx.lineTo(c.x + vec[0].x, c.y + vec[0].y);
     ctx.stroke();
 }
 
 // draw player
-function draw_player (centre, rotation){
+function draw_player (c, rotation){
     // vector from centre of ship
     let vec = [vector(0, -30), vector(15, 15), vector(6,12), vector(-6,12), vector(-15, 15)];
 
@@ -190,7 +277,10 @@ function draw_player (centre, rotation){
     ship.fire_vec = vec[0];
 
     // draw player
-    draw_poly(vec, centre);
+    draw_poly(vec, c);
+
+    // print number of bullets
+    ctx.strokeText(bullet_cnt, c.x + 30, c.y - 30);
 }
 
 function draw_bullet (){
@@ -198,15 +288,15 @@ function draw_bullet (){
     ctx.beginPath();
     let prev = bullet_container[0].centre;
     ctx.arc(bullet_container[0].centre.x,bullet_container[0].centre.y, 2, 0, 2 * 3);
-    for (let i = 1; i < bullet_container.length; i++){
+    for (let j = 1; j < bullet_container.length; j++){
         // draw bullet
-        let cur = bullet_container[i].centre;
+        let cur = bullet_container[j].centre;
         for (let i = 0; i < asteroid_container.length; i++) {
             if(check_box(prev, cur, asteroid_container[i].box, asteroid_container[i])){
                 asteroid_container[i].alive = false;
             }
         }
-        ctx.arc(bullet_container[i].centre.x,bullet_container[i].centre.y, 1, 0, 2 * 3);
+        ctx.arc(bullet_container[j].centre.x,bullet_container[j].centre.y, 1, 0, 2 * 3);
         prev = cur;
     }
     ctx.stroke();
@@ -229,24 +319,34 @@ function draw_astroid(){
 }
 
 function spawn_asteroid(num, speed){
-    let dir, x, y, random_speed, delta;
+    // bullet_cnt = 60;
+    let dir, dir_2, x, y, random_speed, delta;
     for (let i = 0; i < num; i++) {
         dir = Math.random() * 360;
-        console.log(dir);
+        dir_2 = Math.random() * 360;
+        // console.log(dir);
         x = Math.random() * (windowWidth - 60);
         y = Math.random() * (windowHeight - 60);
         random_speed = Math.random() * 0.1;
-        delta = vector_scale(vector_rotation(vector(-1,-1), dir), speed + random_speed);
-        let ast = asteroid(point(x, y), rotate_vec(asteroid_vec, dir), true, rotate_vec(asteroid_box, dir), delta, 3);
+        let new_vec = [...asteroid_vec];
+        let new_box = [...asteroid_box];
+        new_vec = rotate_vec(new_vec, dir);
+        new_box = rotate_vec(new_box, dir)
+        delta = vector_scale(vector_rotation(vector(-1,-1), dir_2), speed + random_speed);
+        let ast = asteroid(point(x, y), new_vec, true, new_box, delta, 3);
         asteroid_container.push(ast);
-        console.log(ast);
+        // console.log(ast);
     }
 }
 
 function fire(){
-    let _bullet_ = bullet(point_translate(ship.centre, ship.fire_vec), vector_scale(ship.fire_vec, bullet_speed), 0);
-    // append 
-    bullet_container.push(_bullet_);
+    if(bullet_cnt > 0){
+        bullet_cnt--;
+        console.log(bullet_cnt);
+        let _bullet_ = bullet(point_translate(ship.centre, ship.fire_vec), vector_scale(ship.fire_vec, bullet_speed), 0);
+        // append 
+        bullet_container.push(_bullet_);
+    }
 }
 
 function check_boundary(obj){
@@ -267,8 +367,21 @@ function check_boundary(obj){
     }
 }
 
+function game_over(flag){
+    // clear screen
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (flag){
+        ctx.strokeText("You ran out of bullets", centre.x, centre.y);
+    }
+    else{
+        ctx.strokeText("You were hit by an asteroid", centre.x, centre.y);
+    }
+
+}
+
 // draw function
 function draw (cnt) {
+
     // set color
     let color = rainbow(cnt);
     ctx.strokeStyle = color;
@@ -335,110 +448,28 @@ function draw (cnt) {
     } else{
         num_of_ast += 3;
         ast_spd += 0.5;
+        if (num_of_ast >= 40){
+            bullet_cnt = 30;
+        }
+        else{
+            bullet_cnt = 15;
+        }
         spawn_asteroid(num_of_ast, ast_spd);
     }
 
     // draw player
     draw_player(ship.centre, ship.rotation);
-    window.requestAnimationFrame((cnt) => draw(cnt++));
+    window.requestAnimationFrame((cnt) => {draw(cnt++)});
 }
 
-// get window width/height
-let windowWidth = window.innerWidth;
-let windowHeight = window.innerHeight;
-console.log("Window is %d by %d", windowWidth, windowHeight);
 
-// get canvas object
-const canvas = document.getElementById('mainCanvas');
-
-// set canvas size
-canvas.width = windowWidth - 30;
-canvas.height = windowHeight - 30;
-canvas.style.border = '1px solid black';
-
-// set up context for the canvas
-const ctx = canvas.getContext('2d');
-ctx.lineWidth = 2;
-ctx.fillStyle = '#000009';
- 
-// point modificatoin functions 
-const radian = (deg) => (deg * (Math.PI / 180));
-const point  = (x = 0, y = 0) => ({x, y});
-const vector = (x = 0, y = 0) => ({x, y});
-const point_translate = (p, v)   => ({x: p.x + v.x, y: p.y + v.y});
-const vector_rotation = (v, deg) => ({x: (v.x * Math.cos(radian(deg)) - v.y * Math.sin(radian(deg))), y:(v.x * Math.sin(radian(deg)) + v.y * Math.cos(radian(deg)))});
-const vector_scale = (v, s) => ({x: v.x * s, y: v.y *s});
-const vector_change = (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y});
-
-// teleport on edge
-const point_flip_top = (p) => ({x: windowWidth - p.x, y: canvas.height});
-const point_flip_bot = (p) => ({x: windowWidth - p.x, y: 0});
-const point_flip_left = (p) => ({x: canvas.width, y: windowHeight - p.y});
-const point_flip_right = (p) => ({x: 0, y: windowHeight - p.y});
-
-// game object functions: bullet, asteroid
-const bullet = (centre, vec, timer) => ({centre, vec, timer});
-const asteroid = (centre, vec, alive, box, delta, level) => ({centre, vec, alive, box, delta, level});
-
-// centre point
-const centre = point(canvas.width / 2, canvas.height / 2);
-
-// bounding box is 60px x 60px
-const asteroid_vec = [vector(26, -27), vector(13, -30), vector(0, -27), vector(-12, -30), vector(-20, -27), vector(-27, -23), vector(-30, -10), vector(-24, -2), vector(-30, 8), vector(-20,30), vector(0,26), vector(17, 30), vector(21, 19), vector(28,18), vector(25, 3), vector(30, -10)];
-const asteroid_box = [vector(30, 30), vector(-30, 30), vector(-30, -30), vector(30, -30)];
-const bound_box_mod = (box, s, r) => {
-    box.forEach((vec, index) => {
-        box[index] = vector_scale(vec, s);
-        box[index] = vector_rotation(vec, r);
-    });
-    return box;
-};
-
-// // test asteroid
-// var rot = Math.floor((Math.random() * 360) + 1)
-// const test_ast = asteroid(point(windowWidth / 2 - 50, windowHeight / 2 - 50), rotate_vec(asteroid_vec, rot), true);
-// const test_vec = vector_rotation(vector(-1,-1), rot);
-
-// create ship(player) object
-const ship = new Object();
-ship.centre = centre;
-ship.rotation = 0;
-ship.rot_vel = 0;
-ship.fire_vec = vector(0, -30);
-ship.thrust = 0;
-ship.vec = vector(0, 0);
-
-// // create bullet
-// const bullet = new Object();
-// bullet.centre = point_translate(centre, ship.fire_vec);
-// bullet.vec = vector(0,0);
-
-// contains all of the bullets on screen
-var bullet_container = [];
-
-// contains all of the asteriods
-var asteroid_container = [];
-
-var num_of_ast = 20;
-var ast_spd = 1;
-spawn_asteroid(num_of_ast, ast_spd);
-
-// firing boolean, and firing timer -> controlled by the firing rate
-var fired = false;
-var fire_timer = 0;
-const fire_rate = 2;
-
-// cool down timer to track instead of fire timer after fire key release
-var cool_down = false;
-var cool_down_timer = 0;
-
-// bullet constants
-const bullet_lifetime = 150;
-const bullet_speed = 0.7;
 
 // event listeners
 document.addEventListener("keydown", key_press);
 document.addEventListener("keyup", key_release);
+
+// spawn
+spawn_asteroid(num_of_ast, ast_spd);
 
 // start animation engine
 window.requestAnimationFrame(() => draw(0));
