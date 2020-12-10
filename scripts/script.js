@@ -33,10 +33,16 @@ const vector_scale = (v, s) => ({x: v.x * s, y: v.y *s});
 const vector_change = (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y});
 
 // teleport on edge
-const point_flip_top = (p) => ({x: windowWidth - p.x, y: canvas.height});
-const point_flip_bot = (p) => ({x: windowWidth - p.x, y: 0});
-const point_flip_left = (p) => ({x: canvas.width, y: windowHeight - p.y});
-const point_flip_right = (p) => ({x: 0, y: windowHeight - p.y});
+const point_flip_top = (p) => ({x: p.x, y: canvas.height});
+const point_flip_bot = (p) => ({x: p.x, y: 0});
+const point_flip_left = (p) => ({x: canvas.width, y: p.y});
+const point_flip_right = (p) => ({x: 0, y: p.y});
+
+// teleport bullet
+const bullet_flip_top = (p) => ({x: windowWidth - p.x, y: canvas.height});
+const bullet_flip_bot = (p) => ({x: windowWidth - p.x, y: 0});
+const bullet_flip_left = (p) => ({x: canvas.width, y: windowHeight - p.y});
+const bullet_flip_right = (p) => ({x: 0, y: windowHeight - p.y});
 
 // centre point
 const centre = point(canvas.width / 2, canvas.height / 2);
@@ -77,6 +83,7 @@ var asteroid_container = [];
 var num_of_ast = 20;
 var ast_spd = 1.5;
 var bullet_cnt = 30;
+var chance = 0.3;
 
 // firing boolean, and firing timer -> controlled by the firing rate
 var fired = false;
@@ -90,6 +97,10 @@ var cool_down_timer = 0;
 // bullet constants
 const bullet_lifetime = 150;
 const bullet_speed = 0.7;
+
+// miscellaneous
+var debug = false;
+var debug_key = 0;
 
 // changing sine to hex for rainbow cycle
 function sin_to_hex(i, phase) {
@@ -119,6 +130,31 @@ function key_press(event){
     if (keyCode === 68) {
         ship.rot_vel = -2;
     }
+    if (keyCode === 78) {
+        debug_key = 1;
+    }
+    if (keyCode === 69) {
+        if (debug_key === 1)
+            debug_key = 2;
+        else
+            debug_key = 0;
+    }
+    if (keyCode === 71) {
+        if (debug_key === 2)
+            debug_key = 3;
+        else
+            debug_key = 0;
+    }
+    if (keyCode === 73) {
+        if (debug_key === 3){
+            debug_key = 0;
+            debug = !debug;
+            console.log("debug mode is %s", debug);
+        }
+        else
+            debug_key = 0;
+    }
+
 
     // fire bullet
     if (keyCode === 32 && !fired && !cool_down) {
@@ -281,6 +317,7 @@ function draw_player (c, rotation){
 
     // print number of bullets
     ctx.strokeText(bullet_cnt, c.x + 30, c.y - 30);
+    ctx.strokeText(asteroid_container.length, c.x - 30, c.y - 30);
 }
 
 function draw_bullet (){
@@ -294,6 +331,12 @@ function draw_bullet (){
         for (let i = 0; i < asteroid_container.length; i++) {
             if(check_box(prev, cur, asteroid_container[i].box, asteroid_container[i])){
                 asteroid_container[i].alive = false;
+                if (bullet_cnt < 30){
+                    var rng = Math.random();
+                    if (rng >= chance){
+                        bullet_cnt++;
+                    }
+                }
             }
         }
         ctx.arc(bullet_container[j].centre.x,bullet_container[j].centre.y, 1, 0, 2 * 3);
@@ -314,7 +357,9 @@ function draw_astroid(){
     }
     for (let i = 0; i < asteroid_container.length; i++){
         draw_poly(asteroid_container[i].vec, asteroid_container[i].centre);
-        draw_poly(asteroid_container[i].box, asteroid_container[i].centre);
+
+        // // debug
+        // draw_poly(asteroid_container[i].box, asteroid_container[i].centre);
     }
 }
 
@@ -351,16 +396,74 @@ function fire(){
 
 function check_boundary(obj){
     if (obj.centre.x > canvas.width){
+        // if (obj.centre.y > canvas.height){
+        //     return point_flip_bot(point_flip_right(obj.centre));
+        // } else if (obj.centre.y < 0){
+        //     return point_flip_top(point_flip_right(obj.centre));
+        // }
         return point_flip_right(obj.centre);
     } 
     else if (obj.centre.x < 0){
+        // if (obj.centre.y > canvas.height){
+        //     return point_flip_bot(point_flip_left(obj.centre));
+        // }else if (obj.centre.y < 0){
+        //     return point_flip_top(point_flip_left(obj.centre));
+        // }
         return point_flip_left(obj.centre);
     } 
     else if (obj.centre.y > canvas.height){
+        // if (obj.centre.x > canvas.width){
+        //     return point_flip_bot(point_flip_right(obj.centre));
+        // }else if (obj.centre.x < 0){
+        //     return point_flip_bot(point_flip_left(obj.centre));
+        // }
         return point_flip_bot(obj.centre);
     } 
     else if (obj.centre.y < 0){
+        // if (obj.centre.x > canvas.width){
+        //     return point_flip_top(point_flip_right(obj.centre));
+        // }else if (obj.centre.x < 0){
+        //     return point_flip_top(point_flip_left(obj.centre));
+        // }
         return point_flip_top(obj.centre);
+    }
+    else {
+        return obj.centre;
+    }
+}
+
+function check_bullet(obj){
+    if (obj.centre.x > canvas.width){
+        // if (obj.centre.y > canvas.height){
+        //     return point_flip_bot(point_flip_right(obj.centre));
+        // } else if (obj.centre.y < 0){
+        //     return point_flip_top(point_flip_right(obj.centre));
+        // }
+        return bullet_flip_right(obj.centre);
+    } 
+    else if (obj.centre.x < 0){
+        // if (obj.centre.y > canvas.height){
+        //     return point_flip_bot(point_flip_left(obj.centre));
+        // }else if (obj.centre.y < 0){
+        //     return point_flip_top(point_flip_left(obj.centre));
+        // }
+        return bullet_flip_left(obj.centre);
+    } 
+    else if (obj.centre.y > canvas.height){
+        // if (obj.centre.x > canvas.width){
+        //     return point_flip_bot(point_flip_right(obj.centre));
+        // }else if (obj.centre.x < 0){
+        //     return point_flip_bot(point_flip_left(obj.centre));
+        // }
+        return bullet_flip_bot(obj.centre);
+    } 
+    else if (obj.centre.y < 0){
+        // if (obj.centre.x > canvas.width){
+        //     return point_flip_top(point_flip_right(obj.centre));
+        // }else if (obj.centre.x < 0){
+        //     return point_flip_top(point_flip_left(obj.centre));
+        // }
+        return bullet_flip_top(obj.centre);
     }
     else {
         return obj.centre;
@@ -399,7 +502,10 @@ function draw (cnt) {
         // apply bullet vector
         bullet_container[i].centre = point_translate(bullet_container[i].centre, bullet_container[i].vec);
         bullet_container[i].timer ++;
-        bullet_container[i].centre = check_boundary(bullet_container[i]);
+        if (!debug)
+            bullet_container[i].centre = check_bullet(bullet_container[i]);
+        else
+            bullet_container[i].centre = check_boundary(bullet_container[i]);
     }
 
     for (let i = 0; i < asteroid_container.length; i++) {
@@ -446,14 +552,18 @@ function draw (cnt) {
     if (asteroid_container.length){
         draw_astroid();
     } else{
-        num_of_ast += 3;
-        ast_spd += 0.5;
+        ast_spd += 1;
         if (num_of_ast >= 40){
-            bullet_cnt = 30;
-        }
-        else{
             bullet_cnt = 15;
         }
+        else{
+            num_of_ast += 3;
+            bullet_cnt = 10;
+        }
+
+        if (chance <= 0.9)
+            chance += 0.1;
+
         spawn_asteroid(num_of_ast, ast_spd);
     }
 
