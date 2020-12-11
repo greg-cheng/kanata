@@ -1,0 +1,78 @@
+{
+  "name": "kanata",
+  "productName": "カナタの彼岸",
+  "version": "1.0.0",
+  "description": "This is a vector based, space shooter game inspired by Asteroids released by Atari in 1979 created using HTML5 canvas and Javascript.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\"",
+    "build-installer": "electron-builder"
+  },
+  "build": {
+    "appID": "kanata",
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/ico.ico",
+      "requestExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "installerIcon": "src/ico.ico",
+      "uninstallerIcon": "src/ico.ico",
+      "uninstallDisplayName": "カナタ",
+      "license": "LICENSE",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "keywords": [],
+  "author": {
+    "name": "溝口・レヴァン・彼岸",
+    "email": ""
+  },
+  "license": "BSD-3-Clause",
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "kanata"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "electron-builder": "^22.9.1",
+    "electron-squirrel-startup": "^1.0.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.54",
+    "@electron-forge/maker-deb": "^6.0.0-beta.54",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+    "@electron-forge/maker-zip": "^6.0.0-beta.54",
+    "electron": "11.0.4"
+  }
+}

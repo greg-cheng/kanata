@@ -1,4 +1,18 @@
-//***************************************//
+<!DOCTYPE html>
+<html lang="en" id="window">
+  <head>
+    <meta charset="utf-8">
+    <title>
+      カナタ
+    </title>
+    <!-- loads last -->
+  </head>
+  <body style="background-color: black;">
+    <!-- canvas -->
+    <canvas id="mainCanvas"></canvas>
+  </body>
+  <script>
+    //***************************************//
 //                                       //
 //                 KANATA                //
 //                                       //
@@ -13,8 +27,8 @@ console.log("Window is %d by %d", windowWidth, windowHeight);
 const canvas = document.getElementById('mainCanvas');
 
 // set canvas size
-canvas.width = windowWidth - 30;
-canvas.height = windowHeight - 30;
+canvas.width = windowWidth-30;
+canvas.height = windowHeight-30;
 canvas.style.border = '1px solid black';
 
 // set up context for the canvas
@@ -599,3 +613,6 @@ spawn_asteroid(num_of_ast, ast_spd);
 
 // start animation engine
 window.requestAnimationFrame(() => draw(0));
+
+  </script>
+</html>
