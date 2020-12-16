@@ -13,6 +13,7 @@ This is a vector based, space shooter game inspired by "Asteroids" released by A
 - Player rotation control
 - Basic level progression
 ### Work in Progress...
+- MacOS and Linux support
 - Player movement
 - Boss levels
 - Sound effects (Coming soon)
