@@ -14,6 +14,8 @@ This is a vector based, space shooter game inspired by "Asteroids" released by A
 - Basic level progression
 ### Work in Progress...
 - MacOS and Linux support
+- C++ Engine development
+  - Sprite batching to improve stability
 - Player movement
 - Boss levels
 - Sound effects (Coming soon)
