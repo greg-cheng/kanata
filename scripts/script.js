@@ -486,6 +486,7 @@ function check_bullet(obj){
     }
 }
 
+// doesn't work lol
 function game_over(flag){
     // clear screen
     ctx.fillRect(0, 0, canvas.width, canvas.height);
