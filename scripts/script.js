@@ -98,8 +98,8 @@ var asteroid_container = [];
 
 var num_of_ast = 20;
 var ast_spd = 1.5;
-var bullet_cnt = 30;
-var chance = 0.3;
+var bullet_cnt = 15;
+var chance = 0.6;
 
 // firing boolean, and firing timer -> controlled by the firing rate
 var fired = false;
@@ -111,7 +111,7 @@ var cool_down = false;
 var cool_down_timer = 0;
 
 // bullet constants
-const bullet_lifetime = 150;
+const bullet_lifetime = 120;
 const bullet_speed = 0.7;
 
 // miscellaneous
@@ -146,6 +146,19 @@ function key_press(event){
     } 
     if (keyCode === 68) {
         ship.rot_vel = -2;
+    }
+    if (keyCode === 82 && game_over) {
+        game_over = 0;
+        ship.centre = centre;
+        ship.rotation = 0;
+        ship.rot_vel = 0;
+        ship.fire_vec = vector(0, -30);
+        ship.thrust = 0;
+        ship.vec = vector(0, 0);
+        num_of_ast = 20;
+        ast_spd = 1.5;
+        bullet_cnt = 15;
+        chance = 0.6;
     }
     if (keyCode === 78) {
         debug_key = 1;
@@ -493,7 +506,7 @@ function game(flag){
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (flag){
         ctx.strokeText("You ran out of bullets", centre.x - 120, centre.y-30);
-        ctx.strokeText("Press Ctrl + R to retry", centre.x - 120, centre.y);
+        ctx.strokeText("Press R to retry", centre.x - 100, centre.y);
     }
     else{
         ctx.strokeText("You were hit by an asteroid", centre.x, centre.y);
@@ -575,15 +588,12 @@ function draw (cnt) {
         }
     } else{
         ast_spd += 1;
-        if (num_of_ast >= 40){
-            bullet_cnt = 15;
-        }
-        else{
+        bullet_cnt += 10;
+        if (num_of_ast <= 40){
             num_of_ast += 3;
-            bullet_cnt = 10;
         }
 
-        if (chance <= 0.9)
+        if (chance <= 1)
             chance += 0.1;
 
         spawn_asteroid(num_of_ast, ast_spd);
