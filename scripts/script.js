@@ -117,6 +117,7 @@ const bullet_speed = 0.7;
 // miscellaneous
 var debug = false;
 var debug_key = 0;
+var game_over = 0;
 
 // changing sine to hex for rainbow cycle
 function sin_to_hex(i, phase) {
@@ -487,11 +488,12 @@ function check_bullet(obj){
 }
 
 // doesn't work lol
-function game_over(flag){
+function game(flag){
     // clear screen
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (flag){
-        ctx.strokeText("You ran out of bullets", centre.x, centre.y);
+        ctx.strokeText("You ran out of bullets", centre.x - 120, centre.y-30);
+        ctx.strokeText("Press Ctrl + R to retry", centre.x - 120, centre.y);
     }
     else{
         ctx.strokeText("You were hit by an asteroid", centre.x, centre.y);
@@ -563,11 +565,14 @@ function draw (cnt) {
     // draw bullet  
     if (bullet_container.length){
         draw_bullet();
-    }
+    } 
 
     // draw asteroid  
     if (asteroid_container.length){
         draw_astroid();
+        if (bullet_container.length === 0 && bullet_cnt === 0) {
+            game_over = 1;
+        }
     } else{
         ast_spd += 1;
         if (num_of_ast >= 40){
@@ -582,12 +587,17 @@ function draw (cnt) {
             chance += 0.1;
 
         spawn_asteroid(num_of_ast, ast_spd);
+
     }
 
     // draw player
     draw_player(ship.centre, ship.rotation);
+    if (game_over){
+        game(game_over);
+    } 
     window.requestAnimationFrame((cnt) => {draw(cnt++)});
 }
+
 
 
 
