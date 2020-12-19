@@ -6,7 +6,7 @@
 ![Ico](https://cdn.discordapp.com/attachments/774891976079441941/788571650785673236/ico.png)
 
 This is a vector based, space shooter game inspired by "Asteroids" released by Atari in 1979 created using HTML5 canvas and Javascript.
-
+Final Commit: 1d34757
 ### Current Features
 - Firing effect
 - Collision between ammunition and asteroids
