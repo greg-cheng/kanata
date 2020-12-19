@@ -120,6 +120,8 @@ var debug_key = 0;
 var game_over = 0;
 
 // changing sine to hex for rainbow cycle
+// Parameter: i -> degree, phase -> control phase of rainbow
+// Return: hex value for colour
 function sin_to_hex(i, phase) {
     var sin = Math.sin(Math.PI / 720 * 2 * i + phase);
     var int = Math.floor(sin * 127) + 128;
@@ -128,6 +130,8 @@ function sin_to_hex(i, phase) {
 }
 
 // function create r, g, b
+// Parameter: i -> degree
+// Return: full hex name of colour
 function _rainbow_(i){
     var red   = sin_to_hex(i, 0 * Math.PI * 2/3); // 0   deg
     var blue  = sin_to_hex(i, 1 * Math.PI * 2/3); // 120 deg
@@ -147,6 +151,7 @@ function key_press(event){
     if (keyCode === 68) {
         ship.rot_vel = -2;
     }
+    // restart button
     if (keyCode === 82 && game_over) {
         game_over = 0;
         ship.centre = centre;
@@ -160,6 +165,7 @@ function key_press(event){
         bullet_cnt = 15;
         chance = 0.6;
     }
+    // debug code
     if (keyCode === 78) {
         debug_key = 1;
     }
@@ -224,12 +230,17 @@ const max = (a, b) => (a > b ? a:b);
 const min = (a, b) => (a < b ? a:b);
 
 // check if q lies on the line pq
+// Parameter: three points
+// Return: if is on segment, return true, else return false
 function on_segment (p, q, r) {
     if (q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) && q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y)) 
        return true; 
     return false; 
 }
 
+// check for point orientation
+// Parameter: three points to check
+// Return: the orientation represented by numbers
 function point_orientation(p, q, r) {
     // formula for calculating point orientation of three points
     let val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
@@ -243,6 +254,9 @@ function point_orientation(p, q, r) {
     return val > 0 ? 1:2 
 }
 
+// check if two lines intersect, used for collision detection
+// Parameter: end points of l1 (p1, q1) & end points of l2(p2, q2)
+// Return: If the two lines intersect
 function check_intersect(p1, q1, p2, q2) { 
     // check all points
     let o1 = point_orientation(p1, q1, p2); 
@@ -275,6 +289,8 @@ function check_intersect(p1, q1, p2, q2) {
 } 
 
 // check intersection for each box
+// Parameter: end points of lines to check, v -> bounding box vector of the asteroid, ast -> the asteroid itself
+// Return: if the line segment intersects the boundbox
 function check_box (p1, q1, v, ast){
     // only need to check three because at least two sides has to be intersected if it is intersecting
     
@@ -305,6 +321,8 @@ function check_box (p1, q1, v, ast){
 
 
 // apply rotation to all vectors in array
+// Parameter: v -> vectors to rotate & rotation -> angles to rotate by
+// Return: Modified vectors
 function rotate_vec (v, rotation) {
     let vec_list = v;
     for (let i = 0; i < vec_list.length; i++) {
@@ -316,6 +334,8 @@ function rotate_vec (v, rotation) {
 }
 
 // draw polygon
+// Parameter: vec -> list of vectors & c -> polygon center point
+// Return: none
 function draw_poly (vec, c) {
     // begin path
     ctx.beginPath();
@@ -334,6 +354,8 @@ function draw_poly (vec, c) {
 }
 
 // draw player
+// Parameter: c -> player center & rotation -> player rotation
+// Return: none
 function draw_player (c, rotation){
     // vector from centre of ship
     let vec = [vector(0, -30), vector(15, 15), vector(6,12), vector(-6,12), vector(-15, 15)];
@@ -350,6 +372,9 @@ function draw_player (c, rotation){
     ctx.strokeText(asteroid_container.length, c.x - 30, c.y - 30);
 }
 
+// draw each bullet that is fired and alive
+// Parameter: none
+// Return: none
 function draw_bullet (){
     // begin path
     ctx.beginPath();
@@ -378,6 +403,9 @@ function draw_bullet (){
     // ctx.stroke();
 }
 
+// draw each asteroid that is spawned and alive
+// Parameter: none
+// Return: none
 function draw_astroid(){
     for (let i = 0; i < asteroid_container.length; i++){
         if (!asteroid_container[i].alive){
@@ -393,6 +421,9 @@ function draw_astroid(){
     }
 }
 
+// to spawn asteroids when scene is clear
+// Parameter: num -> number of asteroids & speed -> speed of asteroid movement
+// Return: none
 function spawn_asteroid(num, speed){
     // bullet_cnt = 60;
     let dir, dir_2, x, y, random_speed, delta;
@@ -414,6 +445,9 @@ function spawn_asteroid(num, speed){
     }
 }
 
+// bullet firing function, pushes bullet object to list of bullets to render
+// Parameter: none
+// Return: none
 function fire(){
     if(bullet_cnt > 0){
         bullet_cnt--;
@@ -424,6 +458,9 @@ function fire(){
     }
 }
 
+// check if object is out of boundary
+// Parameter: obj -> object to check
+// Return: modified object center
 function check_boundary(obj){
     if (obj.centre.x > canvas.width){
         // if (obj.centre.y > canvas.height){
@@ -462,6 +499,9 @@ function check_boundary(obj){
     }
 }
 
+// Bullet Reflection function (slightly different from asteroid reflection)
+// Parameter: obj -> the bullet object
+// Return: modified bullet center
 function check_bullet(obj){
     if (obj.centre.x > canvas.width){
         // if (obj.centre.y > canvas.height){
@@ -500,7 +540,9 @@ function check_bullet(obj){
     }
 }
 
-// doesn't work lol
+// Game over scene
+// Parameter: flag -> death message to show
+// Return: none
 function game(flag){
     // clear screen
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -514,7 +556,9 @@ function game(flag){
 
 }
 
-// draw function
+// draw function -> recursively calls itself
+// Parameter: cnt -> rainbow phase
+// Return: none
 function draw (cnt) {
 
     // set color
